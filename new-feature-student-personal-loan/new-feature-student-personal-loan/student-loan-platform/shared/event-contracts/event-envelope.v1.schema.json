@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://student-loan-platform.local/schemas/event-envelope.v1.json",
+  "title": "Event envelope v1",
+  "description": "Common envelope for every event published by platform services. Never include tokens, passwords, document contents or identity numbers.",
+  "type": "object",
+  "required": ["eventId", "eventType", "eventVersion", "applicationId", "occurredAt", "data"],
+  "properties": {
+    "eventId": { "type": "string", "pattern": "^evt-[0-9a-f-]{36}$" },
+    "eventType": { "type": "string" },
+    "eventVersion": { "type": "integer", "const": 1 },
+    "correlationId": { "type": ["string", "null"], "maxLength": 64 },
+    "applicationId": { "type": "string", "description": "Business reference, e.g. PLN-2026-0001" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": false
+}

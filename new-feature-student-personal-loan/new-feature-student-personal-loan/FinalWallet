@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet - Gift App Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #10b981;
+            --wallet-yellow: #facc15;
+            --wallet-brown: #78350f;
+            --wallet-skyblue: #0ea5e9;
+            --bg-body: #0f172a; 
+            --bg-canvas: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-dark: #111827;
+            --text-light: #6b7280;
+            --border: #d1d5db;
+        }
+
+        [data-theme="dark"] {
+            --bg-canvas: #111827;
+            --bg-card: #1f2937;
+            --text-dark: #f9fafb;
+            --text-light: #9ca3af;
+            --border: #374151;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* --- CONTROLS --- */
+        .view-controls {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            z-index: 100;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            height: 750px;
+            background: var(--bg-canvas);
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .app-container.mobile-mode {
+            max-width: 375px;
+            height: 667px;
+            border: 8px solid #111;
+            border-radius: 40px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #fefce8 0%, #f5f0e8 50%, #e0f2fe 100%);
+            padding: 15px 24px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        [data-theme="dark"] header { background: linear-gradient(135deg, #422006 0%, #1e1b4b 100%); }
+
+        .content { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* --- BALANCE CARD --- */
+        .balance-card {
+            background: linear-gradient(135deg, var(--wallet-yellow) 0%, var(--wallet-brown) 50%, var(--wallet-skyblue) 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            box-shadow: 0 10px 20px -5px rgba(120, 53, 15, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-content { position: relative; z-index: 1; text-align: left; width: 85%; }
+        .balance-content p { font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; }
+        
+        /* High Balance Flexibility Logic */
+        .balance-content h1 { 
+            font-size: clamp(1.2rem, 7vw, 2.5rem); /* Scales on mobile, floor is 1.2rem */
+            font-weight: 800; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            word-break: break-all;
+            overflow-wrap: break-word;
+            line-height: 1.1;
+            transition: font-size 0.3s ease;
+        }
+        
+        .verified-badge { 
+            display: inline-block;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.25); 
+            padding: 4px 10px; 
+            border-radius: 50px; 
+            font-size: 0.6rem; 
+            font-weight: 700;
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        /* --- CURRENCY SELECTOR --- */
+        .currency-selector-wrap {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+        }
+        .currency-label { font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+        .currency-dropdown {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* --- GRID --- */
+        .wallet-grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
+        @media (min-width: 650px) {
+            .app-container:not(.mobile-mode) .wallet-grid { grid-template-columns: 1fr 1.2fr; }
+        }
+
+        .section-card { background: var(--bg-card); border: 1px solid var(--border); padding: 20px; border-radius: 16px; }
+        
+        /* --- TABS --- */
+        .history-tabs { display: flex; gap: 2px; background: var(--bg-canvas); padding: 4px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 10px 5px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.7rem; font-weight: 700; color: var(--text-light); background: transparent; transition: 0.2s; text-transform: uppercase; }
+        .tab-btn.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .history-item:last-child { border-bottom: none; }
+        
+        .amt-plus { color: var(--secondary); font-weight: 800; font-size: 0.9rem; }
+        .amt-minus { color: var(--text-dark); font-weight: 800; font-size: 0.9rem; }
+
+        /* --- FORMS --- */
+        .input-group { margin-bottom: 15px; }
+        .input-label { font-size: 0.75rem; font-weight: 700; color: var(--text-light); margin-bottom: 6px; display: block; }
+        .custom-input, .custom-select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-canvas); color: var(--text-dark); font-weight: 600; outline: none; }
+        .btn-withdraw { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-withdraw:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        /* --- UTILS --- */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spinning { animation: spin 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body>
+
+    <div class="view-controls">
+        <span>Web</span>
+        <label class="switch"><input type="checkbox" id="viewToggle" onchange="toggleView()"><span class="slider"></span></label>
+        <span>Mobile</span>
+        <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
+        <span>🌙 Dark</span>
+        <label class="switch"><input type="checkbox" id="darkToggle" onchange="toggleDark()"><span class="slider"></span></label>
+    </div>
+
+    <div class="app-container" id="appFrame">
+        <header>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-dark)">←</button>
+                <h2 style="color:var(--text-dark); font-size:1.1rem">My Wallet</h2>
+            </div>
+            <button style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-dark)">✕</button>
+        </header>
+
+        <div class="content">
+            <div class="balance-card">
+                <div class="balance-content">
+                    <p>Available Balance</p>
+                    <h1 id="wallet-balance">$1,250,000.00</h1>
+                    <span class="verified-badge">✓ VERIFIED ACCOUNT</span>
+                </div>
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshWallet()">↻</button>
+            </div>
+
+            <div class="currency-selector-wrap">
+                <span class="currency-label">Display:</span>
+                <select class="currency-dropdown" id="currencySelect" onchange="updateCurrency()">
+                    <option value="USD">USD ($)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="KWD">Dinar (KD)</option>
+                    <option value="KRW">Won (₩)</option>
+                </select>
+            </div>
+
+            <div class="wallet-grid">
+                <div class="section-card">
+                    <h4 style="color: var(--text-dark); margin-bottom: 15px; font-size: 0.9rem;">Withdraw Funds</h4>
+                    <div class="input-group">
+                        <label class="input-label">Payment Method</label>
+                        <select id="withdraw-method" class="custom-select">
+                            <option>PayPal</option>
+                            <option>Bank Transfer</option>
+                            <option>USDT (TRC20)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Amount</label>
+                        <input type="number" id="withdraw-amount" placeholder="Min 50.00" class="custom-input">
+                    </div>
+                    <button class="btn-withdraw" onclick="processWithdrawal()">Confirm Withdrawal</button>
+                </div>
+
+                <div class="section-card">
+                    <div class="history-tabs">
+                        <button class="tab-btn active" onclick="switchTab(event, 'earnings')">Earnings</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'deposits')">Deposits</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'withdrawals')">Withdraws</button>
+                    </div>
+
+                    <div id="earnings" class="tab-content active">
+                        <div class="history-item">
+                            <div style="font-size:0.85rem">
+                                <p style="font-weight:700; color:var(--text-dark)">Lucky Spin Win</p>
+                                <small style="color:var(--text-light)">Jan 16, 2026</small>
+                            </div>
+                            <div class="amt-plus">+$2.50</div>
+                        </div>
+                        <div class="history-item">
+                            <div style="font-size:0.85rem">
+                                <p style="font-weight:700; color:var(--text-dark)">Daily Check-in</p>
+                                <small style="color:var(--text-light)">Jan 15, 2026</small>
+                            </div>
+                            <div class="amt-plus">+$0.50</div>
+                        </div>
+                    </div>
+
+                    <div id="deposits" class="tab-content">
+                        <div class="history-item">
+                            <div style="font-size:0.85rem">
+                                <p style="font-weight:700; color:var(--text-dark)">Crypto Top-up (USDT)</p>
+                                <small style="color:var(--text-light)">Jan 12, 2026</small>
+                            </div>
+                            <div class="amt-plus">+$500.00</div>
+                        </div>
+                        <div class="history-item">
+                            <div style="font-size:0.85rem">
+                                <p style="font-weight:700; color:var(--text-dark)">Admin Refund</p>
+                                <small style="color:var(--text-light)">Jan 10, 2026</small>
+                            </div>
+                            <div class="amt-plus">+$15.00</div>
+                        </div>
+                    </div>
+
+                    <div id="withdrawals" class="tab-content">
+                        <div class="history-item">
+                            <div style="font-size:0.85rem">
+                                <p style="font-weight:700; color:var(--text-dark)">PayPal Payout</p>
+                                <small style="color:var(--text-light)">Jan 14, 2026</small>
+                            </div>
+                            <div class="amt-minus">-$120.00</div>
+                        </div>
+                        <div class="history-item">
+                            <div style="font-size:0.85rem">
+                                <p style="font-weight:700; color:var(--text-dark)">Bank Transfer</p>
+                                <small style="color:var(--text-light)">Jan 08, 2026</small>
+                            </div>
+                            <div class="amt-minus">-$1,500.00</div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let rawBalance = 1250000.00;
+
+        function updateCurrency() {
+            const select = document.getElementById('currencySelect');
+            const balanceEl = document.getElementById('wallet-balance');
+            const currency = select.value;
+            
+            let formatted;
+            switch(currency) {
+                case 'INR': formatted = '₹' + (rawBalance * 83).toLocaleString(); break;
+                case 'KWD': formatted = (rawBalance * 0.31).toLocaleString() + ' KD'; break;
+                case 'KRW': formatted = '₩' + (rawBalance * 1300).toLocaleString(); break;
+                default: formatted = '$' + rawBalance.toLocaleString();
+            }
+            
+            balanceEl.style.opacity = '0';
+            setTimeout(() => {
+                balanceEl.innerText = formatted;
+                balanceEl.style.opacity = '1';
+            }, 150);
+        }
+
+        function toggleView() {
+            document.getElementById('appFrame').classList.toggle('mobile-mode', document.getElementById('viewToggle').checked);
+        }
+
+        function toggleDark() {
+            document.getElementById('appFrame').setAttribute('data-theme', document.getElementById('darkToggle').checked ? 'dark' : 'light');
+        }
+
+        function refreshWallet() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('spinning');
+            setTimeout(() => btn.classList.remove('spinning'), 800);
+            updateCurrency();
+        }
+
+        function switchTab(evt, tabName) {
+            const contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+            
+            const tabs = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < tabs.length; i++) tabs[i].classList.remove("active");
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function processWithdrawal() {
+            const amt = document.getElementById('withdraw-amount').value;
+            if(amt >= 50) alert("Withdrawal Request of " + amt + " Submitted!");
+            else alert("Error: Minimum withdrawal is 50.00");
+        }
+    </script>
+</body>
+</html>

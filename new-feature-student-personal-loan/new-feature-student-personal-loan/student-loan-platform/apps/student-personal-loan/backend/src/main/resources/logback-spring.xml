@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    <springProperty scope="context" name="service" source="spring.application.name"/>
+
+    <!-- Structured JSON logs (for Elastic Stack / Splunk). Enable with the "json-logs" Spring profile -->
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <version>[ignore]</version>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
+            <customFields>{"service":"${service}","environment":"${ENVIRONMENT:-local}"}</customFields>
+        </encoder>
+    </appender>
+
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{HH:mm:ss.SSS} %5p [%X{correlationId:-no-corr}] %-40.40logger{39} : %m%n"/>
+
+    <springProfile name="json-logs">
+        <root level="INFO"><appender-ref ref="JSON"/></root>
+    </springProfile>
+    <springProfile name="!json-logs">
+        <root level="INFO"><appender-ref ref="CONSOLE"/></root>
+    </springProfile>
+</configuration>

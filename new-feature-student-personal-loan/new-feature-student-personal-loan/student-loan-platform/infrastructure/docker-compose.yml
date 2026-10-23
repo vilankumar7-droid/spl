@@ -1,0 +1,57 @@
+# Local development stack. Usage (from repo root):
+#   cp .env.example .env && docker compose --env-file .env -f infrastructure/docker-compose.yml up --build
+# Kafka, the Python agent, Elastic Stack and Splunk are added in later stages (see docs/architecture).
+name: student-loan-platform
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-personal_loan}
+      POSTGRES_USER: ${POSTGRES_USER:-studentloan}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  personal-loan-api:
+    build: ../apps/student-personal-loan/backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-personal_loan}
+      DB_USERNAME: ${POSTGRES_USER:-studentloan}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_ACCESS_TOKEN_MINUTES: ${JWT_ACCESS_TOKEN_MINUTES:-60}
+      SEED_DEMO_USERS: ${SEED_DEMO_USERS:-true}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-Password@123}
+      CORS_ALLOWED_ORIGINS: http://localhost:4200
+      DOCUMENT_STORAGE_DIR: /data/documents
+      SPRING_PROFILES_ACTIVE: json-logs
+      FEATURE_HOME_LOAN: ${FEATURE_HOME_LOAN:-false}
+      FEATURE_PDF_AGENT: ${FEATURE_PDF_AGENT:-false}
+      FEATURE_KAFKA: ${FEATURE_KAFKA:-false}
+      FEATURE_BACKGROUND_VERIFICATION: ${FEATURE_BACKGROUND_VERIFICATION:-false}
+    ports:
+      - "8080:8080"
+    volumes:
+      - document-data:/data/documents
+
+  personal-loan-web:
+    build: ../apps/student-personal-loan/frontend
+    depends_on:
+      - personal-loan-api
+    ports:
+      - "4200:80"
+
+volumes:
+  postgres-data:
+  document-data:

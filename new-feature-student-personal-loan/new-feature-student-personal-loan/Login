@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Your Site</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { margin: 0; font-family: Roboto, sans-serif; display: flex; height: 100vh; }
+        .left { flex: 1; background: url('your-image.jpg') center/cover; display: flex; align-items: center; justify-content: center; }
+        .right { flex: 1; padding: 40px; display: flex; flex-direction: column; justify-content: center; background: #fff; }
+        .logo { font-size: 2em; color: #4285f4; margin-bottom: 20px; }
+        button { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 4px; background: #4285f4; color: white; cursor: pointer; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        #g_id_onload { display: none; }
+        @media (max-width: 768px) { body { flex-direction: column; } .left { height: 40vh; } .right { height: 60vh; padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="left">
+        <div style="text-align: center; color: white;">
+            <h1>Your Website</h1>
+            <p>Discover innovative features</p>
+        </div>
+    </div>
+    <div class="right">
+        <div class="logo">Your Logo</div>
+        <div id="g_id_onload"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID"
+             data-callback="handleGoogleSignIn">
+        </div>
+        <div id="g_id_signin" class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="sign_in_with" data-size="large" data-logo_alignment="left"></div>
+        <p style="text-align: center; margin: 20px 0;">OR</p>
+        <form id="emailForm">
+            <input type="email" id="email" placeholder="your@gmail.com" required pattern=".+@gmail.com">
+            <input type="password" id="password" placeholder="Enter password">
+            <button type="button" onclick="generatePassword()">Generate 8-Digit Password</button>
+            <button type="button" onclick="sendOTP()">Send OTP</button>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+    <script>
+        function handleGoogleSignIn(response) {
+            // Send token to backend /auth/google
+            fetch('/api/auth/google', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ token: response.credential }) })
+                .then(res => res.json()).then(data => { if (data.success) window.location.href = '/dashboard'; });
+        }
+        function generatePassword() {
+            const chars = '0123456789';
+            let pwd = '';
+            for (let i = 0; i < 8; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+            document.getElementById('password').value = pwd;
+        }
+        function sendOTP() {
+            const email = document.getElementById('email').value;
+            if (!email.endsWith('@gmail.com')) return alert('Gmail only');
+            fetch('/api/auth/otp/send', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email }) })
+                .then(res => res.json()).then(data => alert(data.message || 'OTP sent'));
+        }
+        document.getElementById('emailForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value; // OTP or generated pwd
+            fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email, password }) })
+                .then(res => res.json()).then(data => { if (data.success) window.location.href = '/dashboard'; else alert(data.error); });
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "loan.application.submitted v1",
+  "description": "Topic: loan-application-events. Published when an applicant submits a complete application.",
+  "allOf": [{ "$ref": "event-envelope.v1.schema.json" }],
+  "properties": {
+    "eventType": { "const": "loan.application.submitted" },
+    "data": {
+      "type": "object",
+      "required": ["loanType", "requestedAmount", "tenureMonths", "purpose"],
+      "properties": {
+        "loanType": { "enum": ["PERSONAL", "HOME"] },
+        "requestedAmount": { "type": "number" },
+        "tenureMonths": { "type": "integer" },
+        "purpose": { "type": "string" }
+      }
+    }
+  }
+}

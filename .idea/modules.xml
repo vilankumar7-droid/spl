@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/new-feature-student-personal-loan/new-feature-student-personal-loan/student-loan-platform/apps/student-personal-loan/backend/src/main/main.iml" filepath="$PROJECT_DIR$/new-feature-student-personal-loan/new-feature-student-personal-loan/student-loan-platform/apps/student-personal-loan/backend/src/main/main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/spl.iml" filepath="$PROJECT_DIR$/.idea/spl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/new-feature-student-personal-loan/new-feature-student-personal-loan/student-loan-platform/apps/student-personal-loan/backend/src/test/test.iml" filepath="$PROJECT_DIR$/new-feature-student-personal-loan/new-feature-student-personal-loan/student-loan-platform/apps/student-personal-loan/backend/src/test/test.iml" />
+    </modules>
+  </component>
+</project>

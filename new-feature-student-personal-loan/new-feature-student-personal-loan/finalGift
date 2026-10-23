@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift App - Premium Multi-View</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --bg-deep: #0f172a;
+            --bg-light: #f1f5f9;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --gold: #fbbf24;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+        /* --- MULTI-VIEW LAYOUT --- */
+        body { 
+            background: radial-gradient(circle at 50% 50%, #1e293b, #020617);
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            padding: 20px;
+            transition: 0.5s ease;
+        }
+
+        /* Mode Switcher UI */
+        .view-switcher {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            z-index: 1000;
+        }
+
+        .switch { position: relative; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: #334155; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* App Container Styling */
+        #app-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 85vh;
+            background: var(--bg-light);
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Mobile Frame Mode */
+        body.mobile-mode #app-container {
+            max-width: 380px;
+            height: 780px;
+            border: 12px solid #0f172a;
+            border-radius: 45px;
+        }
+
+        /* --- APP CONTENT STYLING --- */
+        header { background: var(--white); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .brand { font-weight: 800; color: var(--primary); font-size: 1.1rem; }
+
+        .content-scroll { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+
+        .card-wheel { background: var(--white); padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin: 20px; }
+        
+        .wheel-container { display: flex; flex-direction: column; align-items: center; position: relative; margin: 15px auto; }
+        .wheel-wrap {
+            position: relative; width: 260px; height: 260px;
+            border-radius: 50%; border: 6px solid #1e293b;
+            background: #1e293b;
+        }
+        #wheelCanvas { width: 100%; height: 100%; }
+        .wheel-pointer {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 20px; height: 30px; background: var(--danger);
+            clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10;
+        }
+
+        .btn-run { 
+            background: linear-gradient(135deg, var(--primary), #2563eb); 
+            color: white; border: none; padding: 16px; border-radius: 14px; 
+            font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem;
+            transition: 0.2s;
+        }
+        .btn-run:active { transform: scale(0.98); }
+        .btn-run:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+        /* TABS */
+        .tabs-container { padding: 0 20px; }
+        .tab-nav { background: #e2e8f0; border-radius: 14px; display: flex; padding: 4px; position: relative; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px 5px; border: none; background: transparent; font-weight: 600; color: var(--text-muted); cursor: pointer; z-index: 2; font-size: 0.85rem; }
+        .tab-btn.active { color: white; transition: 0.3s; }
+        .nav-slider { position: absolute; top: 4px; left: 4px; width: calc(33.33% - 4px); height: calc(100% - 8px); background: var(--primary); border-radius: 10px; transition: 0.3s ease; z-index: 1; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        .item-row { background: white; padding: 12px 15px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); }
+        .refer-box { background: white; padding: 20px; border-radius: 20px; text-align: center; border: 2px dashed var(--primary); }
+        .code { font-size: 1.4rem; font-weight: 800; color: var(--primary); display: block; margin: 5px 0; letter-spacing: 2px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="view-switcher">
+        <span>Web View</span>
+        <label class="switch">
+            <input type="checkbox" id="modeToggle">
+            <span class="slider"></span>
+        </label>
+        <span>Mobile App</span>
+    </div>
+
+    <div id="app-container">
+        <header>
+            <div class="brand">GIFT APP PRO</div>
+            <div id="spin-count" style="font-weight: 700; font-size: 0.8rem; color: var(--text-muted);">Spins: 5/5</div>
+        </header>
+
+        <div class="content-scroll">
+            <section class="card-wheel">
+                <h3 style="font-size: 1rem;">Golden Lucky Wheel</h3>
+                <div class="wheel-container">
+                    <div class="wheel-wrap">
+                        <div class="wheel-pointer"></div>
+                        <canvas id="wheelCanvas" width="300" height="300"></canvas>
+                    </div>
+                    <p id="spinMessage" style="margin-top: 10px; font-weight: 700; color: var(--primary); min-height: 20px;"></p>
+                </div>
+                <button id="spin-btn" class="btn-run" onclick="startSpin()">SPIN NOW</button>
+            </section>
+
+            <section class="tabs-container">
+                <div class="tab-nav">
+                    <div class="nav-slider" id="navSlider"></div>
+                    <button class="tab-btn active" onclick="switchTab(0, 'refer')">Refer & Earn</button>
+                    <button class="tab-btn" onclick="switchTab(1, 'leader')">Leaderboard</button>
+                    <button class="tab-btn" onclick="switchTab(2, 'reward')">Reward History</button>
+                </div>
+
+                <div id="view-refer" class="tab-content active">
+                    <div class="refer-box">
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Invite friends & get 200 coins!</p>
+                        <span class="code">GOLD2026</span>
+                        <button onclick="alert('Copied!')" style="background:var(--bg-light); border:none; padding:8px 15px; border-radius:10px; cursor:pointer; font-weight:700; font-size: 0.8rem;">📋 Copy Code</button>
+                    </div>
+                </div>
+
+                <div id="view-leader" class="tab-content">
+                    <div class="item-row" style="background: #fffbeb;"><span>🥇 Sarah</span><strong>5400</strong></div>
+                    <div class="item-row"><span>🥈 Mike</span><strong>4200</strong></div>
+                    <div class="item-row"><span>🥉 Alex</span><strong>3100</strong></div>
+                </div>
+
+                <div id="view-reward" class="tab-content">
+                    <div id="history-container">
+                        <p style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.8rem;">No recent activity.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+<script>
+    /* --- VIEW TOGGLE --- */
+    document.getElementById('modeToggle').addEventListener('change', function() {
+        document.body.classList.toggle('mobile-mode');
+        setTimeout(drawWheel, 300);
+    });
+
+    /* --- STATE --- */
+    let spinsLeft = parseInt(localStorage.getItem('spins_left') || 5);
+    let currentRotation = 0;
+    let isSpinning = false;
+
+    // Reset Logic: Add a spin every second if below max (5)
+    setInterval(() => {
+        if (spinsLeft < 5 && !isSpinning) {
+            spinsLeft++;
+            localStorage.setItem('spins_left', spinsLeft);
+            updateSpinUI();
+        }
+    }, 1000);
+
+    const segments = [
+        { label: '50', color: '#f87171', value: 50 },
+        { label: '150', color: '#fbbf24', value: 150 },
+        { label: '500', color: '#34d399', value: 500 },
+        { label: '700', color: '#60a5fa', value: 700 },
+        { label: '1000', color: '#a78bfa', value: 1000 },
+        { label: '0', color: '#94a3b8', value: 0 }
+    ];
+
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function drawWheel() {
+        const arc = (Math.PI * 2) / segments.length;
+        ctx.clearRect(0,0,300,300);
+        segments.forEach((seg, i) => {
+            const angle = currentRotation + i * arc;
+            ctx.beginPath();
+            ctx.fillStyle = seg.color;
+            ctx.moveTo(150, 150);
+            ctx.arc(150, 150, 140, angle, angle + arc);
+            ctx.fill();
+            
+            ctx.save();
+            ctx.translate(150, 150);
+            ctx.rotate(angle + arc / 2);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "white";
+            ctx.font = "bold 18px Arial";
+            ctx.fillText(seg.label, 130, 8);
+            ctx.restore();
+        });
+        
+        ctx.beginPath();
+        ctx.fillStyle = "white";
+        ctx.arc(150, 150, 12, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function updateSpinUI() {
+        document.getElementById('spin-count').innerText = `Spins: ${spinsLeft}/5`;
+        if(spinsLeft <= 0) {
+            document.getElementById('spin-btn').disabled = true;
+            document.getElementById('spin-btn').innerText = "LIMIT REACHED";
+        } else if (!isSpinning) {
+            document.getElementById('spin-btn').disabled = false;
+            document.getElementById('spin-btn').innerText = "SPIN NOW";
+        }
+    }
+
+    function switchTab(index, view) {
+        document.getElementById('navSlider').style.left = `calc(${index * 33.33}% + 4px)`;
+        document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('view-' + view).classList.add('active');
+    }
+
+    function startSpin() {
+        if (isSpinning || spinsLeft <= 0) return;
+        isSpinning = true;
+        document.getElementById('spin-btn').disabled = true;
+        document.getElementById('spinMessage').innerText = "Spinning...";
+
+        const extraSpins = Math.random() * 20 + 40; 
+        const duration = 4000;
+        const start = performance.now();
+
+        function animate(time) {
+            const elapsed = time - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            currentRotation += (extraSpins * (1 - easeOut) * 0.1);
+            drawWheel();
+            if (progress < 1) requestAnimationFrame(animate);
+            else resolvePrize();
+        }
+        requestAnimationFrame(animate);
+    }
+
+    function resolvePrize() {
+        isSpinning = false;
+        const arc = (Math.PI * 2) / segments.length;
+        const normalized = (currentRotation % (Math.PI * 2));
+        const winIdx = segments.length - 1 - Math.floor(((normalized + Math.PI/2) % (Math.PI * 2)) / arc);
+        const prize = segments[winIdx >= 0 ? winIdx : 0];
+        
+        spinsLeft--;
+        localStorage.setItem('spins_left', spinsLeft);
+        updateSpinUI();
+        
+        document.getElementById('spinMessage').innerText = prize.value > 0 ? `CONGRATULATIONS YOU WON : ${prize.value}! GOLDEN HEART TOKENS` : "Try Again!";
+        saveHistory(prize.value);
+        
+        setTimeout(() => {
+            if(spinsLeft > 0) document.getElementById('spin-btn').disabled = false;
+            if(prize.value > 0) {
+                alert(`Congratulations! You won ${prize.value} Golden Heart Coins!`);
+            } else {
+                alert("No prize this time.");
+            }
+        }, 400);
+    }
+
+    function saveHistory(val) {
+        const history = JSON.parse(localStorage.getItem('spin_history') || '[]');
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        history.unshift({ prize: val === 0 ? '0' : val, time: time });
+        localStorage.setItem('spin_history', JSON.stringify(history.slice(0, 5)));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('spin_history') || '[]');
+        const container = document.getElementById('history-container');
+        if(history.length === 0) return;
+        container.innerHTML = history.map(item => `
+            <div class="item-row">
+                <div><strong>${item.prize === '0' ? 'Spin' : 'Reward'}</strong><br><small>${item.time}</small></div>
+                <span style="color: ${item.prize === '0' ? 'red' : 'green'}; font-weight: 800;">${item.prize === '0' ? '0' : '+' + item.prize}</span>
+            </div>
+        `).join('');
+    }
+
+    // Init
+    drawWheel();
+    updateSpinUI();
+    renderHistory();
+</script>
+
+</body>
+</html>

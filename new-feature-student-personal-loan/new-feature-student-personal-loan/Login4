@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sajag Coin | Login</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --primary: #4285f4;
+            --secondary: #34a853;
+            --dark: #1a1a1a;
+            --gray: #9ca3af;
+            --bg-web: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-mobile: linear-gradient(145deg, #f0f2f5 0%, #e8eaf6 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        body { min-height: 100vh; overflow-x: hidden; background: #f0f2f5; }
+
+        /* --- TOGGLE MOVED TO LEFT --- */
+        .toggle-container {
+            position: fixed; 
+            top: 20px; 
+            left: 20px; /* Changed from right: 20px */
+            z-index: 9999;
+            background: rgba(255,255,255,0.9); 
+            backdrop-filter: blur(10px);
+            padding: 10px; 
+            border-radius: 50px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .toggle-btn {
+            background: var(--primary); 
+            color: white; 
+            border: none;
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            cursor: pointer;
+            font-weight: 600; 
+            transition: 0.3s;
+        }
+
+        /* WEB VIEW LAYOUT */
+        #webViewWrapper { display: flex; height: 100vh; width: 100%; }
+        .web-left { width: 60%; background: var(--bg-web); position: relative; color: white; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .web-slide { position: absolute; opacity: 0; transition: 1s; padding: 40px; }
+        .web-slide.active { opacity: 1; }
+        .web-right { width: 40%; background: white; display: flex; align-items: center; justify-content: center; }
+        .web-container { width: 100%; max-width: 400px; padding: 40px; }
+
+        /* MOBILE VIEW LAYOUT */
+        #mobileViewWrapper { display: none; min-height: 100vh; padding: 80px 20px; background: var(--bg-mobile); }
+        .mobile-container { max-width: 400px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .mobile-header { background: var(--bg-web); color: white; padding: 40px 20px; text-align: center; font-weight: bold; }
+
+        /* SHARED FORM STYLES */
+        .form-group { margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-apple { background: #000; color: white; }
+        .error { color: #ef4444; font-size: 14px; margin-bottom: 10px; text-align: center; height: 20px; }
+        .or-divider { text-align: center; color: #aaa; margin: 20px 0; position: relative; }
+
+        /* MODAL */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; }
+
+        @media (max-width: 768px) {
+            #webViewWrapper { display: none !important; }
+            #mobileViewWrapper { display: block !important; }
+            .toggle-container { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toggle-container">
+        <button class="toggle-btn" id="viewToggle" onclick="toggleView()">📱 Switch View</button>
+    </div>
+
+    <div id="webViewWrapper">
+        <div class="web-left">
+            <div class="web-slide active"><h1>🔒 Secure Digital Wallet</h1><p>Enterprise-grade security</p></div>
+            <div class="web-slide"><h1>⚡ Lightning Fast</h1><p>Transactions in seconds</p></div>
+        </div>
+        <div class="web-right">
+            <div class="web-container">
+                <h2 style="color:var(--primary); margin-bottom:30px; text-align:center;">Sajag Coin</h2>
+                <input type="email" id="webEmail" placeholder="Email (Gmail only)" class="form-group">
+                <input type="password" id="webPass" placeholder="Password" class="form-group">
+                <div class="error" id="webError"></div>
+                <button class="btn btn-primary" onclick="handleLogin('web')">Sign In</button>
+                <button class="btn btn-secondary" onclick="openSignup()">Create Account</button>
+                <div class="or-divider">OR</div>
+                <div id="g_id_onload" data-client_id="YOUR_ID" data-callback="handleGoogle"></div>
+                <div class="g_id_signin" data-size="large" data-width="320"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobileViewWrapper">
+        <div class="mobile-container">
+            <div class="mobile-header" id="mobileSlideText">🔒 Secure Digital Wallet</div>
+            <div style="padding: 30px;">
+                <h3 style="margin-bottom:20px;">Email + Apple Login</h3>
+                <input type="email" id="mobileEmail" placeholder="Email" class="form-group">
+                <input type="password" id="mobilePass" placeholder="Password" class="form-group">
+                <div class="error" id="mobileError"></div>
+                <button class="btn btn-primary" onclick="handleLogin('mobile')">Sign In</button>
+                <button class="btn btn-apple">Sign in with Apple</button>
+                <div class="or-divider">Google Sign</div>
+                <div class="g_id_signin" data-size="large" data-width="340"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeSignup()">×</span>
+            <h3>Create Account</h3><br>
+            <input type="email" id="regEmail" placeholder="Gmail only" class="form-group">
+            <input type="password" id="regPass" placeholder="Password (8+ chars)" class="form-group">
+            <button class="btn btn-primary" onclick="handleRegister()">Register</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleView() {
+            const web = document.getElementById('webViewWrapper');
+            const mobile = document.getElementById('mobileViewWrapper');
+            const btn = document.getElementById('viewToggle');
+
+            if (web.style.display === 'none') {
+                web.style.display = 'flex';
+                mobile.style.display = 'none';
+                btn.innerHTML = '📱 Switch View';
+            } else {
+                web.style.display = 'none';
+                mobile.style.display = 'block';
+                btn.innerHTML = '🌐 Switch View';
+            }
+        }
+
+        let sIdx = 0;
+        const wSlides = document.querySelectorAll('.web-slide');
+        const mTexts = ["🔒 Secure Digital Wallet", "⚡ Lightning Fast", "💎 Full Control"];
+        
+        setInterval(() => {
+            wSlides[sIdx].classList.remove('active');
+            sIdx = (sIdx + 1) % wSlides.length;
+            wSlides[sIdx].classList.add('active');
+            document.getElementById('mobileSlideText').innerText = mTexts[sIdx % mTexts.length];
+        }, 3000);
+
+        function handleLogin(type) {
+            const email = document.getElementById(type + 'Email').value;
+            const pass = document.getElementById(type + 'Pass').value;
+            const err = document.getElementById(type + 'Error');
+
+            if (email === "sunil@gmail.com" && pass === "Sunil@1900") {
+                alert("Welcome Sunil! Login Successful.");
+                return;
+            }
+
+            if (!email.endsWith("@gmail.com")) {
+                err.innerText = "Gmail accounts only";
+                return;
+            }
+            if (pass.length < 8) {
+                err.innerText = "Password must be 8+ chars";
+                return;
+            }
+
+            alert("Login Successful for " + email);
+        }
+
+        function openSignup() { document.getElementById('signupModal').style.display = 'flex'; }
+        function closeSignup() { document.getElementById('signupModal').style.display = 'none'; }
+        
+        function handleRegister() {
+            alert("Account created successfully!");
+            closeSignup();
+        }
+
+        function handleGoogle(response) {
+            console.log("Google User Token:", response.credential);
+            alert("Google Sign-In Successful!");
+        }
+    </script>
+</body>
+</html>

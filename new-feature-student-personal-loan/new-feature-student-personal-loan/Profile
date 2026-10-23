@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Wheel & Profile App</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --white: #ffffff;
+            --gray: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        /* Mobile-First Container */
+        .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; background: var(--bg); position: relative; }
+
+        /* Header */
+        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: var(--white); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .logo { font-weight: bold; color: var(--primary); }
+        .menu-icon { cursor: pointer; display: flex; flex-direction: column; gap: 5px; z-index: 1001; }
+        .menu-icon span { width: 25px; height: 3px; background: var(--text); border-radius: 2px; }
+
+        /* Sidebar Navigation */
+        .sidebar { position: fixed; top: 0; right: -100%; width: 280px; height: 100%; background: var(--white); box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 1000; transition: 0.4s; padding: 80px 30px; }
+        .sidebar.active { right: 0; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { padding: 15px 0; font-size: 18px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+
+        /* MAIN DASHBOARD VIEW */
+        .view { display: block; padding-bottom: 30px; }
+        .hidden { display: none !important; }
+
+        /* Wheel Card */
+        .card { background: var(--white); margin: 20px; padding: 25px; border-radius: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; }
+        .wheel-container { position: relative; width: 220px; height: 220px; margin: 20px auto; }
+        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #334155; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .segment { position: absolute; width: 50%; height: 50%; transform-origin: bottom right; transform: rotate(calc(45deg * var(--i))); background-color: var(--clr); }
+        .wheel-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); color: #ef4444; font-size: 24px; z-index: 10; }
+        .btn-run { background: var(--primary); color: white; border: none; padding: 12px 50px; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 15px; width: 100%; }
+
+        /* Tab Selector */
+        .tab-switcher { margin: 20px; background: #e2e8f0; border-radius: 16px; display: flex; position: relative; padding: 4px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; font-weight: 600; color: #64748b; cursor: pointer; z-index: 2; }
+        .tab-btn.active { color: white; }
+        .slider { position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px); background: var(--primary); border-radius: 12px; transition: 0.3s; z-index: 1; }
+
+        /* PROFILE PAGE VIEW */
+        .profile-view { padding: 20px; background: var(--white); min-height: 100vh; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
+        .back-btn { font-size: 24px; cursor: pointer; }
+
+        .avatar-section { position: relative; width: 120px; height: 120px; margin: 0 auto 30px; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); }
+        .edit-img-icon { position: absolute; bottom: 5px; right: 5px; background: var(--primary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; font-size: 14px; }
+
+        .profile-field { margin-bottom: 20px; }
+        .profile-field label { display: block; font-size: 13px; color: var(--gray); margin-bottom: 5px; font-weight: 600; }
+        .input-group { position: relative; display: flex; align-items: center; }
+        .input-group input { width: 100%; padding: 12px 40px 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 16px; outline: none; }
+        .edit-input-icon { position: absolute; right: 15px; color: var(--primary); cursor: pointer; font-size: 16px; }
+
+        .unique-id-box { background: #f1f5f9; padding: 15px; border-radius: 10px; border: 1px dashed var(--gray); text-align: center; margin-top: 30px; }
+        .unique-id-box span { display: block; color: var(--gray); font-size: 12px; margin-bottom: 5px; }
+        .unique-id-box strong { letter-spacing: 2px; color: var(--text); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="logo">GIFTAPP</div>
+        <div class="menu-icon" onclick="toggleSidebar()">
+            <span></span><span></span><span></span>
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <ul>
+            <li onclick="showView('profile')">👤 Profile</li>
+            <li>⚙️ Setting</li>
+            <li>ℹ️ About</li>
+            <li>❓ Help</li>
+            <li onclick="location.reload()">🚪 Logout</li>
+        </ul>
+    </div>
+
+    <div id="dashboard-view" class="view">
+        <div class="card">
+            <h3>Gift Wheel</h3>
+            <p style="font-size: 13px; color: var(--gray); margin-top: 5px;">automatically Runs when button is hit</p>
+            <div class="wheel-container">
+                <div class="wheel-pointer">▼</div>
+                <div id="wheel" class="wheel">
+                    <div class="segment" style="--i:1; --clr:#f87171;"></div>
+                    <div class="segment" style="--i:2; --clr:#fbbf24;"></div>
+                    <div class="segment" style="--i:3; --clr:#34d399;"></div>
+                    <div class="segment" style="--i:4; --clr:#60a5fa;"></div>
+                    <div class="segment" style="--i:5; --clr:#818cf8;"></div>
+                    <div class="segment" style="--i:6; --clr:#a78bfa;"></div>
+                    <div class="segment" style="--i:7; --clr:#fb7185;"></div>
+                    <div class="segment" style="--i:8; --clr:#94a3b8;"></div>
+                </div>
+            </div>
+            <button class="btn-run" id="runBtn" onclick="spinWheel()">Run</button>
+        </div>
+
+        <div class="tab-switcher">
+            <div class="slider" id="slider"></div>
+            <button class="tab-btn active" onclick="switchTab('refer', this)">Refer & Earn</button>
+            <button class="tab-btn" onclick="switchTab('leader', this)">Leaderboard</button>
+        </div>
+
+        <div id="tab-content" style="padding: 0 20px;">
+            <div id="refer" class="tab-pane">
+                <div class="card" style="margin: 0; background: #eff6ff;">
+                    <h4>Invite Friends</h4>
+                    <p style="margin: 10px 0;">Earn points for every signup!</p>
+                </div>
+            </div>
+            <div id="leader" class="tab-pane hidden">
+                <div class="card" style="margin: 0; text-align: left;">
+                    <p>1. User_882 ... 500pt</p>
+                    <p>2. User_124 ... 450pt</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-view" class="view profile-view hidden">
+        <div class="profile-header">
+            <span class="back-btn" onclick="showView('dashboard')">←</span>
+            <h2>Profile</h2>
+        </div>
+
+        <div class="avatar-section">
+            <img src="https://via.placeholder.com/150" alt="Profile" class="avatar" id="profilePic">
+            <label for="upload" class="edit-img-icon">✎
+                <input type="file" id="upload" hidden accept="image/*" onchange="previewImage(event)">
+            </label>
+        </div>
+
+        <div class="profile-field">
+            <label>Name :-</label>
+            <div class="input-group">
+                <input type="text" value="John Doe" id="nameInput">
+                <span class="edit-input-icon">✎</span>
+            </div>
+        </div>
+
+        <div class="profile-field">
+            <label>Email :-</label>
+            <div class="input-group">
+                <input type="email" value="john@example.com" id="emailInput">
+                <span class="edit-input-icon">✎</span>
+            </div>
+        </div>
+
+        <div class="profile-field">
+            <label>Phone :-</label>
+            <div class="input-group">
+                <input type="tel" value="+1 234 567 890" id="phoneInput">
+                <span class="edit-input-icon">✎</span>
+            </div>
+        </div>
+
+        <div class="unique-id-box">
+            <span>uniqueId</span>
+            <strong id="uniqueId">UID-9982-XXXX-001</strong>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Navigation
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    function showView(viewName) {
+        document.getElementById('sidebar').classList.remove('active');
+        if(viewName === 'profile') {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('profile-view').classList.remove('hidden');
+        } else {
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('profile-view').classList.add('hidden');
+        }
+    }
+
+    // Wheel Logic
+    let degree = 0;
+    function spinWheel() {
+        const wheel = document.getElementById('wheel');
+        const btn = document.getElementById('runBtn');
+        btn.disabled = true;
+        degree += Math.floor(Math.random() * 2000) + 2000;
+        wheel.style.transform = `rotate(${degree}deg)`;
+        setTimeout(() => { 
+            btn.disabled = false;
+            alert("Spinned Successfully!");
+        }, 4000);
+    }
+
+    // Tab Logic
+    function switchTab(type, btn) {
+        const slider = document.getElementById('slider');
+        slider.style.left = type === 'leader' ? 'calc(50% - 4px)' : '4px';
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.getElementById('refer').classList.toggle('hidden', type !== 'refer');
+        document.getElementById('leader').classList.toggle('hidden', type !== 'leader');
+    }
+
+    // Profile Logic
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function(){
+            document.getElementById('profilePic').src = reader.result;
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+
+</body>
+</html>

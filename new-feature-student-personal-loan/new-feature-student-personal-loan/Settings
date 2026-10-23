@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift, Profile & Settings App</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --bg-light: #f1f5f9;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #cbd5e1; display: flex; justify-content: center; min-height: 100vh; color: var(--text-main); }
+
+        .app-shell {
+            width: 100%;
+            max-width: 480px;
+            background: var(--bg-light);
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header {
+            background: var(--white);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand { font-weight: 800; color: var(--primary); }
+
+        .hamburger { cursor: pointer; display: flex; flex-direction: column; gap: 5px; z-index: 1002; }
+        .hamburger span { width: 25px; height: 3px; background: var(--text-main); border-radius: 4px; transition: 0.3s; }
+
+        /* Sidebar & Backdrop */
+        .backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .backdrop.active { display: block; opacity: 1; }
+
+        .sidebar {
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            height: 100%;
+            background: var(--white);
+            z-index: 1001;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 80px 30px;
+            box-shadow: -10px 0 20px rgba(0,0,0,0.1);
+        }
+        .sidebar.open { right: 0; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { padding: 18px 0; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+
+        /* Views */
+        .view { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .back-row { display: flex; align-items: center; margin-bottom: 25px; gap: 15px; }
+        .back-row h2 { font-size: 1.3rem; }
+
+        /* Dashboard */
+        .card { background: var(--white); padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .wheel-container { position: relative; width: 200px; height: 200px; margin: 20px auto; }
+        .wheel { width: 100%; height: 100%; border: 6px solid #333; border-radius: 50%; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .segment { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; transform: rotate(calc(45deg * var(--i))); background: var(--clr); }
+        .btn-run { background: var(--primary); color: white; border: none; padding: 12px 50px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; }
+
+        /* Profile */
+        .avatar-wrap { width: 110px; height: 110px; margin: 0 auto 30px; position: relative; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; }
+        .edit-badge { position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; }
+        .input-box { margin-bottom: 20px; }
+        .input-box label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 5px; }
+        .field { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; }
+        .field input { flex: 1; border: none; background: transparent; outline: none; font-size: 1rem; }
+
+        /* Settings & Language Change */
+        .setting-item {
+            background: var(--white);
+            padding: 16px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .lang-select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--white);
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
+    
+    <header>
+        <div class="brand" id="ui-brand">GIFT APP</div>
+        <div class="hamburger" onclick="toggleSidebar()">
+            <span></span><span></span><span></span>
+        </div>
+    </header>
+
+    <nav class="sidebar" id="sidebar">
+        <ul>
+            <li onclick="switchView('profile')">👤 <span class="txt-profile">Profile</span></li>
+            <li onclick="switchView('settings')">⚙️ <span class="txt-settings">Setting</span></li>
+            <li>ℹ️ <span class="txt-about">About</span></li>
+            <li>❓ <span class="txt-help">Help</span></li>
+            <li style="color:var(--danger)" onclick="location.reload()">🚪 <span class="txt-logout">Logout</span></li>
+        </ul>
+    </nav>
+
+    <main id="view-dashboard" class="view active">
+        <div class="card">
+            <h3 class="txt-wheel-title">Gift Wheel</h3>
+            <p style="color:var(--text-muted); font-size:0.8rem; margin: 5px 0 20px;" class="txt-wheel-desc">automatically Runs when button is hit</p>
+            <div class="wheel-container">
+                <div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); z-index:10;">🔻</div>
+                <div id="wheel" class="wheel">
+                    <div class="segment" style="--i:1; --clr:#f87171;"></div>
+                    <div class="segment" style="--i:2; --clr:#fbbf24;"></div>
+                    <div class="segment" style="--i:3; --clr:#34d399;"></div>
+                    <div class="segment" style="--i:4; --clr:#60a5fa;"></div>
+                    <div class="segment" style="--i:5; --clr:#818cf8;"></div>
+                    <div class="segment" style="--i:6; --clr:#a78bfa;"></div>
+                    <div class="segment" style="--i:7; --clr:#f472b6;"></div>
+                    <div class="segment" style="--i:8; --clr:#94a3b8;"></div>
+                </div>
+            </div>
+            <button class="btn-run txt-run" onclick="spinWheel()">Run</button>
+        </div>
+    </main>
+
+    <section id="view-profile" class="view">
+        <div class="back-row">
+            <div onclick="switchView('dashboard')" style="cursor:pointer">⬅</div>
+            <h2 class="txt-profile">Profile</h2>
+        </div>
+        <div class="avatar-wrap">
+            <img src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" class="avatar-img" id="displayPic">
+            <label class="edit-badge">✎<input type="file" hidden onchange="updatePhoto(event)"></label>
+        </div>
+        <div class="input-box">
+            <label class="txt-lbl-name">NAME :-</label>
+            <div class="field"><input type="text" value="Alex Johnson"><span>✎</span></div>
+        </div>
+        <div class="input-box">
+            <label class="txt-lbl-email">EMAIL :-</label>
+            <div class="field"><input type="email" value="alex@example.com"><span>✎</span></div>
+        </div>
+        <div class="input-box">
+            <label class="txt-lbl-phone">PHONE :-</label>
+            <div class="field"><input type="tel" value="+1 234 567 890"><span>✎</span></div>
+        </div>
+        <div style="text-align:center; padding:15px; border:2px dashed var(--border); border-radius:12px;">
+            <p style="font-size:0.7rem; color:var(--text-muted)">uniqueId</p>
+            <strong>XXXX-XXXX-XX</strong>
+        </div>
+    </section>
+
+    <section id="view-settings" class="view">
+        <div class="back-row">
+            <div onclick="switchView('dashboard')" style="cursor:pointer">⬅</div>
+            <h2 class="txt-settings">Settings</h2>
+        </div>
+
+        <div class="setting-item">
+            <div>
+                <h4 class="txt-notif">Notifications</h4>
+                <p style="font-size:0.75rem; color:var(--text-muted)" class="txt-notif-desc">Receive gift alerts</p>
+            </div>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+
+        <div class="input-box" style="margin-top:20px;">
+            <label class="txt-lang-lbl">Change Language</label>
+            <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+                <option value="en">English (US)</option>
+                <option value="es">Español (Spanish)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+            </select>
+        </div>
+    </section>
+</div>
+
+<script>
+    const translations = {
+        en: {
+            brand: "GIFT APP", profile: "Profile", settings: "Settings", about: "About",
+            help: "Help", logout: "Logout", wheelTitle: "Gift Wheel", run: "Run",
+            wheelDesc: "automatically Runs when button is hit", lblName: "NAME :-",
+            lblEmail: "EMAIL :-", lblPhone: "PHONE :-", langLbl: "Change Language",
+            notif: "Notifications", notifDesc: "Receive gift alerts"
+        },
+        es: {
+            brand: "APP DE REGALOS", profile: "Perfil", settings: "Ajustes", about: "Acerca de",
+            help: "Ayuda", logout: "Cerrar sesión", wheelTitle: "Rueda de Regalos", run: "Girar",
+            wheelDesc: "se ejecuta automáticamente al pulsar", lblName: "NOMBRE :-",
+            lblEmail: "CORREO :-", lblPhone: "TELÉFONO :-", langLbl: "Cambiar idioma",
+            notif: "Notificaciones", notifDesc: "Recibir alertas de regalos"
+        },
+        hi: {
+            brand: "गिफ्ट ऐप", profile: "प्रोफ़ाइल", settings: "सेटिंग्स", about: "हमारे बारे में",
+            help: "सहायता", logout: "लॉगआउट", wheelTitle: "गिफ्ट व्हील", run: "चलाएं",
+            wheelDesc: "बटन दबाते ही अपने आप चलता है", lblName: "नाम :-",
+            lblEmail: "ईमेल :-", lblPhone: "फ़ोन :-", langLbl: "भाषा बदलें",
+            notif: "सूचनाएं", notifDesc: "गिफ्ट अलर्ट प्राप्त करें"
+        }
+    };
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('backdrop');
+        sidebar.classList.toggle('open');
+        backdrop.classList.toggle('active');
+    }
+
+    function switchView(viewName) {
+        if(document.getElementById('sidebar').classList.contains('open')) {
+            toggleSidebar();
+        }
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + viewName).classList.add('active');
+    }
+
+    function changeLanguage() {
+        const lang = document.getElementById('langSelect').value;
+        const t = translations[lang];
+        
+        document.getElementById('ui-brand').innerText = t.brand;
+        document.querySelectorAll('.txt-profile').forEach(el => el.innerText = t.profile);
+        document.querySelectorAll('.txt-settings').forEach(el => el.innerText = t.settings);
+        document.querySelector('.txt-about').innerText = t.about;
+        document.querySelector('.txt-help').innerText = t.help;
+        document.querySelector('.txt-logout').innerText = t.logout;
+        document.querySelector('.txt-wheel-title').innerText = t.wheelTitle;
+        document.querySelector('.txt-wheel-desc').innerText = t.wheelDesc;
+        document.querySelector('.txt-run').innerText = t.run;
+        document.querySelector('.txt-lbl-name').innerText = t.lblName;
+        document.querySelector('.txt-lbl-email').innerText = t.lblEmail;
+        document.querySelector('.txt-lbl-phone').innerText = t.lblPhone;
+        document.querySelector('.txt-lang-lbl').innerText = t.langLbl;
+        document.querySelector('.txt-notif').innerText = t.notif;
+        document.querySelector('.txt-notif-desc').innerText = t.notifDesc;
+    }
+
+    let degree = 0;
+    function spinWheel() {
+        const wheel = document.getElementById('wheel');
+        degree += Math.floor(Math.random() * 2000) + 2000;
+        wheel.style.transform = `rotate(${degree}deg)`;
+    }
+
+    function updatePhoto(event) {
+        const reader = new FileReader();
+        reader.onload = () => { document.getElementById('displayPic').src = reader.result; };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+
+</body>
+</html>

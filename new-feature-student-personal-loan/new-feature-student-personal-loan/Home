@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Wheel App</title>
+    <style>
+        /* CSS STYLING */
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Mobile Container */
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--bg);
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 50px;
+        }
+
+        /* Header & Menu */
+        header {
+            padding: 20px;
+            display: flex;
+            justify-content: flex-end;
+            background: var(--white);
+        }
+
+        .menu-icon {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1001;
+        }
+
+        .menu-icon span {
+            width: 25px;
+            height: 3px;
+            background: var(--text);
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100%;
+            background: var(--white);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 80px 30px;
+        }
+
+        .sidebar.active { right: 0; }
+
+        .sidebar ul { list-style: none; }
+        .sidebar li {
+            padding: 15px 0;
+            font-size: 18px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+        }
+
+        .sidebar li:last-child { color: #ef4444; }
+
+        /* Gift Wheel Card */
+        .card {
+            background: var(--white);
+            margin: 20px;
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #334155;
+            position: relative;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+
+        .wheel::before {
+            content: '▼';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ef4444;
+            font-size: 24px;
+            z-index: 10;
+        }
+
+        .segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            transform: rotate(calc(45deg * var(--i)));
+            background-color: var(--clr);
+        }
+
+        .btn-run {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .btn-run:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Dynamic Page Selector */
+        .tab-switcher {
+            margin: 20px;
+            background: #e2e8f0;
+            border-radius: 16px;
+            display: flex;
+            position: relative;
+            padding: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            z-index: 2;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active { color: var(--white); }
+
+        .slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: var(--primary);
+            border-radius: 12px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        /* Content Area */
+        .page-content { padding: 0 20px; }
+        .pane { display: none; animation: fadeIn 0.3s; }
+        .pane.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Leaderboard UI */
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="menu-icon" onclick="toggleSidebar()">
+            <span></span><span></span><span></span>
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <ul>
+            <li>👤 Profile</li>
+            <li>⚙️ Setting</li>
+            <li>ℹ️ About</li>
+            <li>❓ Help</li>
+            <li onclick="toggleSidebar()">🚪 Logout</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>Gift Wheel</h3>
+        <p style="font-size: 14px; color: #64748b; margin-top: 5px;">
+            automatically Runs when button is hit
+        </p>
+
+        <div class="wheel-container">
+            <div id="wheel" class="wheel">
+                <div class="segment" style="--i:1; --clr:#f87171;"></div>
+                <div class="segment" style="--i:2; --clr:#fbbf24;"></div>
+                <div class="segment" style="--i:3; --clr:#34d399;"></div>
+                <div class="segment" style="--i:4; --clr:#60a5fa;"></div>
+                <div class="segment" style="--i:5; --clr:#818cf8;"></div>
+                <div class="segment" style="--i:6; --clr:#a78bfa;"></div>
+                <div class="segment" style="--i:7; --clr:#fb7185;"></div>
+                <div class="segment" style="--i:8; --clr:#94a3b8;"></div>
+            </div>
+        </div>
+
+        <button class="btn-run" id="runBtn" onclick="spinWheel()">Run</button>
+    </div>
+
+    <div class="tab-switcher">
+        <div class="slider" id="slider"></div>
+        <button class="tab-btn active" onclick="showPage('refer', this)">Refer & Earn</button>
+        <button class="tab-btn" onclick="showPage('leaderboard', this)">Leaderboard</button>
+    </div>
+
+    <div class="page-content">
+        <div id="refer" class="pane active">
+            <div class="card" style="margin: 0; background: #dbeafe;">
+                <h4>Your Referral Code</h4>
+                <h2 style="margin: 10px 0; letter-spacing: 2px;">GIFT2024</h2>
+                <p>Share this code to earn $5 per friend!</p>
+            </div>
+        </div>
+
+        <div id="leaderboard" class="pane">
+            <div class="rank-item"><span>1. Alex J.</span> <strong>2,450 pts</strong></div>
+            <div class="rank-item"><span>2. Maria R.</span> <strong>2,100 pts</strong></div>
+            <div class="rank-item"><span>3. Sam K.</span> <strong>1,850 pts</strong></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Sidebar Logic
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    // 2. Wheel Logic
+    let degree = 0;
+    function spinWheel() {
+        const wheel = document.getElementById('wheel');
+        const btn = document.getElementById('runBtn');
+        
+        btn.disabled = true;
+        // Spin between 2000 and 5000 degrees
+        const newSpin = Math.floor(Math.random() * 3000) + 2000;
+        degree += newSpin;
+        
+        wheel.style.transform = `rotate(${degree}deg)`;
+        
+        setTimeout(() => {
+            btn.disabled = false;
+            alert("Congratulations! You won a mystery prize!");
+        }, 4000); // Matches the 4s transition in CSS
+    }
+
+    // 3. Tab Switching Logic
+    function showPage(pageId, btn) {
+        // Move slider
+        const slider = document.getElementById('slider');
+        if(pageId === 'leaderboard') {
+            slider.style.left = 'calc(50% - 4px)';
+        } else {
+            slider.style.left = '4px';
+        }
+
+        // Toggle button active state
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Toggle content panes
+        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+    }
+</script>
+
+</body>
+</html>
+

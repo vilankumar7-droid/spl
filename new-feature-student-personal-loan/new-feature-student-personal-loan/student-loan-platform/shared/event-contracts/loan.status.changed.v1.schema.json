@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "loan.status.changed v1",
+  "description": "Topic: loan-status-events. Published for every validated workflow transition.",
+  "allOf": [{ "$ref": "event-envelope.v1.schema.json" }],
+  "properties": {
+    "eventType": { "const": "loan.status.changed" },
+    "data": {
+      "type": "object",
+      "required": ["fromStatus", "toStatus"],
+      "properties": {
+        "fromStatus": { "type": "string" },
+        "toStatus": { "type": "string" },
+        "reason": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

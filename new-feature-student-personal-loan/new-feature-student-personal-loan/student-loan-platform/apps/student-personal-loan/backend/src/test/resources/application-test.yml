@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:personal_loan_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+platform:
+  jwt:
+    secret: test-only-secret-0123456789abcdef0123456789
+  storage:
+    documents-dir: ./target/test-documents
+  outbox:
+    publish-interval-ms: 600000

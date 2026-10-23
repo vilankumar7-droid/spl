@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift App Pro - Dual Mode Glow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Branding Colors (Constant) */
+            --primary: #6366f1;   
+            --secondary: #ec4899; 
+            --success: #10b981;
+            --gold: #ffd700;
+
+            /* Dark Mode Defaults (Variable) */
+            --bg-deep: #020617; 
+            --bg-gradient: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 25%), 
+                           radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15), transparent 25%);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --drawer-bg: #0f172a;
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            --primary-glow: rgba(99, 102, 241, 0.6);
+            --nav-active-bg: rgba(99, 102, 241, 0.15);
+        }
+
+        /* --- Light Mode Overrides --- */
+        body.light-mode {
+            --bg-deep: #f0f4ff;
+            --bg-gradient: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.1), transparent 30%), 
+                           radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.1), transparent 30%);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(99, 102, 241, 0.2);
+            --drawer-bg: #ffffff;
+            --shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.15);
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --nav-active-bg: rgba(99, 102, 241, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s, border 0.3s, box-shadow 0.3s; }
+
+        body {
+            background-color: var(--bg-deep);
+            background-image: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-main);
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* --- Global Glass Styles --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        /* --- Controls Container --- */
+        .controls-wrapper {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            z-index: 1000;
+        }
+
+        .toggle-card {
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+        }
+
+        /* Switch Styling */
+        .switch { position: relative; width: 44px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; cursor: pointer; inset: 0; 
+            background: #cbd5e1; transition: .4s; border-radius: 34px; 
+        }
+        .slider:before { 
+            position: absolute; content: ""; height: 16px; width: 16px; 
+            left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; 
+        }
+        input:checked + .slider { background: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* --- App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 85vh;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        body.mobile-mode #app-container {
+            max-width: 380px;
+            height: 780px;
+            border: 10px solid #1e293b;
+            border-radius: 45px;
+        }
+
+        header {
+            padding: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .icon-circle {
+            width: 42px; height: 42px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        /* --- Navigation --- */
+        .web-nav {
+            display: flex; gap: 15px; padding: 12px 25px;
+            background: rgba(0,0,0,0.03);
+        }
+        
+        .nav-link {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; border-radius: 12px;
+            cursor: pointer; color: var(--text-muted);
+            text-decoration: none; font-size: 0.9rem; font-weight: 500;
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            background: var(--nav-active-bg);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .content-area { 
+            flex: 1; padding: 30px; 
+            overflow-y: auto; text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .page-view { display: none; animation: fadeIn 0.4s ease; }
+        .page-view.active-view { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Drawer --- */
+        .drawer-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 100; backdrop-filter: blur(4px); }
+        .drawer-overlay.active { display: block; }
+        .right-drawer { 
+            position: absolute; top: 0; right: -300px; width: 280px; height: 100%; 
+            background: var(--drawer-bg); z-index: 101; padding: 40px 20px; 
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            border-left: 1px solid var(--glass-border); 
+            color: var(--text-main);
+        }
+        .right-drawer.active { right: 0; }
+        
+        /* --- Mobile Bottom Nav --- */
+        .mobile-bottom-nav { 
+            display: none; justify-content: space-around; 
+            padding: 10px 10px 25px; 
+            background: var(--glass);
+            border-top: 1px solid var(--glass-border); 
+            position: absolute; bottom: 0; width: 100%; 
+        }
+        
+        body.mobile-mode .web-nav { display: none; }
+        body.mobile-mode .mobile-bottom-nav { display: flex; }
+
+        .placeholder-icon { font-size: 70px; margin-bottom: 20px; color: var(--primary); filter: drop-shadow(0 0 10px var(--primary-glow)); }
+
+        h1, h2 { color: var(--text-main); }
+        p { color: var(--text-muted); }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls-wrapper">
+        <div class="toggle-card glass-panel">
+            <span class="material-icons-round" style="font-size: 18px;">devices</span>
+            <span>Mobile View</span>
+            <label class="switch">
+                <input type="checkbox" id="modeToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="toggle-card glass-panel">
+            <span class="material-icons-round" style="font-size: 18px;">dark_mode</span>
+            <span>Light Mode</span>
+            <label class="switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div id="app-container" class="glass-panel">
+        
+        <div class="drawer-overlay" id="overlay" onclick="toggleMenu()"></div>
+        <div class="right-drawer" id="drawer">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
+                <h3 style="font-weight: 800; color: var(--primary);">GIFT PRO</h3>
+                <span class="material-icons-round" style="cursor: pointer;" onclick="toggleMenu()">close</span>
+            </div>
+            <div style="display: grid; gap: 8px;">
+                <div class="nav-link" onclick="handleNavClick(this, 'Profile')"><span class="material-icons-round">person</span> Profile</div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Wallet')"><span class="material-icons-round">wallet</span> Wallet</div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Settings')"><span class="material-icons-round">settings</span> Settings</div>
+                <hr style="opacity: 0.1; margin: 10px 0;">
+                <div class="nav-link" style="color: var(--secondary);" onclick="handleNavClick(this, 'Logout')"><span class="material-icons-round">logout</span> Logout</div>
+            </div>
+        </div>
+
+        <div style="height: 100%; display: flex; flex-direction: column;">
+            <header>
+                <h2 style="font-weight: 800; letter-spacing: -1px;">GIFT APP</h2>
+                <div class="icon-circle" onclick="toggleMenu()">
+                    <span class="material-icons-round">menu</span>
+                </div>
+            </header>
+
+            <nav class="web-nav">
+                <div class="nav-link active" onclick="handleNavClick(this, 'Dashboard')"><span class="material-icons-round">grid_view</span> Dashboard</div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Gift Wheel')"><span class="material-icons-round">auto_awesome</span> Gift Wheel</div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Earnings')"><span class="material-icons-round">payments</span> Earnings</div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Marketplace')"><span class="material-icons-round">storefront</span> Marketplace</div>
+            </nav>
+
+            <div class="content-area">
+                <div id="view-dashboard" class="page-view active-view">
+                    <span class="material-icons-round placeholder-icon">space_dashboard</span>
+                    <h1 style="font-weight: 800; font-size: 2.2rem; margin-bottom: 10px;">Welcome Back</h1>
+                    <p>Your gifts and earnings are updated for today.</p>
+                </div>
+
+                <div id="view-other" class="page-view">
+                    <span class="material-icons-round placeholder-icon" id="pageIcon">auto_awesome</span>
+                    <h2 id="pageTitle" style="font-weight: 800; font-size: 2rem;">Welcome</h2>
+                    <p style="margin-top: 10px;">This feature is currently being polished.</p>
+                </div>
+            </div>
+
+            <nav class="mobile-bottom-nav">
+                <div class="nav-link active" onclick="handleNavClick(this, 'Dashboard')"><span class="material-icons-round">grid_view</span></div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Gift Wheel')"><span class="material-icons-round">auto_awesome</span></div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Marketplace')"><span class="material-icons-round">storefront</span></div>
+                <div class="nav-link" onclick="handleNavClick(this, 'Profile')"><span class="material-icons-round">person</span></div>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        // Frame Toggles
+        const modeToggle = document.getElementById('modeToggle');
+        const themeToggle = document.getElementById('themeToggle');
+
+        modeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('mobile-mode');
+        });
+
+        themeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('light-mode');
+        });
+
+        // Navigation Logic
+        function toggleMenu() {
+            document.getElementById('drawer').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        function handleNavClick(element, pageName) {
+            // Remove active from all links in all navs
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            
+            // If it's a menu/bottom nav item, we don't have a direct "sibling" group, 
+            // so we'll just highlight the one clicked.
+            element.classList.add('active');
+
+            const dashView = document.getElementById('view-dashboard');
+            const otherView = document.getElementById('view-other');
+            const pageTitle = document.getElementById('pageTitle');
+            const pageIcon = document.getElementById('pageIcon');
+
+            if (pageName === 'Dashboard') {
+                dashView.classList.add('active-view');
+                otherView.classList.remove('active-view');
+            } else {
+                dashView.classList.remove('active-view');
+                otherView.classList.add('active-view');
+                pageTitle.innerText = pageName;
+                
+                let icon = 'auto_awesome';
+                if(pageName.includes('Earnings')) icon = 'payments';
+                if(pageName.includes('Marketplace')) icon = 'storefront';
+                if(pageName.includes('Profile')) icon = 'person';
+                if(pageName.includes('Wallet')) icon = 'wallet';
+                pageIcon.innerText = icon;
+            }
+
+            const drawer = document.getElementById('drawer');
+            if(drawer.classList.contains('active')) toggleMenu();
+        }
+    </script>
+</body>
+</html>

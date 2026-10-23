@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift App - Full Version</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --bg-light: #f1f5f9;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #cbd5e1; display: flex; justify-content: center; min-height: 100vh; color: var(--text-main); }
+
+        .app-shell {
+            width: 100%;
+            max-width: 480px;
+            background: var(--bg-light);
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* --- Header & Sidebar --- */
+        header { background: var(--white); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .brand { font-weight: 800; color: var(--primary); font-size: 1.1rem; }
+        .hamburger { cursor: pointer; display: flex; flex-direction: column; gap: 5px; z-index: 1002; }
+        .hamburger span { width: 25px; height: 3px; background: var(--text-main); border-radius: 4px; transition: 0.3s; }
+
+        .backdrop { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .backdrop.active { display: block; opacity: 1; }
+
+        .sidebar { position: absolute; top: 0; right: -100%; width: 75%; height: 100%; background: var(--white); z-index: 1001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 80px 25px; box-shadow: -10px 0 20px rgba(0,0,0,0.1); }
+        .sidebar.open { right: 0; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { padding: 18px 0; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+        
+        /* --- General Views --- */
+        .view { display: none; padding: 20px; animation: fadeIn 0.3s ease; padding-bottom: 80px; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .back-row { display: flex; align-items: center; margin-bottom: 25px; gap: 15px; }
+
+        /* --- DASHBOARD: Wheel --- */
+        .card { background: var(--white); padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .wheel-container { position: relative; width: 220px; height: 220px; margin: 20px auto; }
+        .wheel { width: 100%; height: 100%; border: 6px solid #333; border-radius: 50%; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .segment { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; transform: rotate(calc(45deg * var(--i))); background: var(--clr); }
+        .btn-run { background: var(--primary); color: white; border: none; padding: 14px 50px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+
+        /* --- DASHBOARD: Dynamic Tabs --- */
+        .tab-nav { background: #e2e8f0; border-radius: 14px; display: flex; padding: 4px; position: relative; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; font-weight: 600; color: var(--text-muted); cursor: pointer; z-index: 2; transition: 0.3s; text-align: center; }
+        .tab-btn.active { color: white; }
+        .nav-slider { position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px); background: var(--primary); border-radius: 10px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; }
+        .nav-slider.right { left: 50%; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        /* --- Wallet Specific --- */
+        .balance-card { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 30px; border-radius: 24px; text-align: center; margin-bottom: 20px; }
+        .balance-amount { font-size: 2.5rem; font-weight: 800; margin: 10px 0; }
+        .history-item { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; margin-bottom: 10px; }
+
+        /* --- Help Specific --- */
+        .faq-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .faq-q { font-weight: 700; color: var(--primary); margin-bottom: 5px; display: block; }
+
+        /* Referral & Leaderboard Styling */
+        .refer-box { background: white; padding: 20px; border-radius: 16px; text-align: center; border: 1px dashed var(--primary); }
+        .code-display { font-size: 1.5rem; letter-spacing: 2px; font-weight: 800; color: var(--primary); margin: 10px 0; display: block; }
+        .leader-item { background: white; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+        .leader-item:nth-child(1) { border: 1px solid #fbbf24; background: #fffbeb; }
+
+        /* --- Profile & Settings --- */
+        .avatar-wrap { width: 110px; height: 110px; margin: 0 auto 30px; position: relative; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; }
+        .edit-badge { position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; }
+        .field { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; margin-bottom: 15px; }
+        .field input { flex: 1; border: none; background: transparent; outline: none; font-size: 1rem; }
+        .label-small { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; }
+        .setting-item { background: var(--white); padding: 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        
+        .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .lang-select { padding: 8px; border-radius: 8px; border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-bg" id="passwordModal" style="
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+">
+    <div class="modal" style="
+        background:white;
+        padding:25px;
+        width:90%;
+        max-width:340px;
+        border-radius:18px;
+    ">
+        <h3 style="margin-bottom:15px;">Change Password</h3>
+
+        <input type="password" id="oldPassword" placeholder="Current Password"
+               style="width:100%;padding:12px;margin-bottom:10px;border-radius:10px;border:1px solid #e2e8f0">
+
+        <input type="password" id="newPassword" placeholder="New Password"
+               style="width:100%;padding:12px;margin-bottom:10px;border-radius:10px;border:1px solid #e2e8f0">
+
+        <input type="password" id="confirmPassword" placeholder="Confirm New Password"
+               style="width:100%;padding:12px;margin-bottom:10px;border-radius:10px;border:1px solid #e2e8f0">
+
+        <small style="color:#64748b">
+            Minimum 8 characters, 1 number & 1 special character
+        </small>
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button onclick="closePasswordModal()" style="
+                flex:1;
+                padding:12px;
+                border-radius:10px;
+                border:1px solid #e2e8f0;
+                background:#f8fafc;
+            ">Cancel</button>
+
+            <button onclick="saveNewPassword()" style="
+                flex:1;
+                padding:12px;
+                border-radius:10px;
+                border:none;
+                background:#3b82f6;
+                color:white;
+                font-weight:700;
+            ">Save</button>
+        </div>
+    </div>
+</div>
+
+<div class="app-shell">
+    <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
+    
+    <header>
+        <div class="brand" id="ui-brand">GIFT APP</div>
+        <div class="hamburger" onclick="toggleSidebar()">
+            <span></span><span></span><span></span>
+        </div>
+    </header>
+
+    <nav class="sidebar" id="sidebar">
+        <ul>
+            <li onclick="switchView('dashboard')">🏠 <span class="txt-home">Home</span></li>
+            <li onclick="switchView('profile')">👤 <span class="txt-profile">Profile</span></li>
+            <li onclick="switchView('wallet')">👛 <span class="txt-wallet">Wallet</span></li>
+            <li onclick="switchView('settings')">⚙️ <span class="txt-settings">Settings</span></li>
+            <li onclick="switchView('help')">❓ <span class="txt-help">Help & Support</span></li>
+            <li style="color:var(--danger)" onclick="location.reload()">🚪 <span class="txt-logout">Logout</span></li>
+        </ul>
+    </nav>
+
+    <main id="view-dashboard" class="view active">
+        <div class="card">
+            <h3 class="txt-wheel-title">Gift Wheel</h3>
+            <p style="color:var(--text-muted); font-size:0.8rem; margin: 5px 0 20px;" class="txt-wheel-desc">Automatically runs when button is hit</p>
+            <div class="wheel-container">
+                <div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); z-index:10; font-size: 24px;">🔻</div>
+                <div id="wheel" class="wheel">
+                    <div class="segment" style="--i:1; --clr:#f87171;"></div>
+                    <div class="segment" style="--i:2; --clr:#fbbf24;"></div>
+                    <div class="segment" style="--i:3; --clr:#34d399;"></div>
+                    <div class="segment" style="--i:4; --clr:#60a5fa;"></div>
+                    <div class="segment" style="--i:5; --clr:#818cf8;"></div>
+                    <div class="segment" style="--i:6; --clr:#a78bfa;"></div>
+                    <div class="segment" style="--i:7; --clr:#f472b6;"></div>
+                    <div class="segment" style="--i:8; --clr:#94a3b8;"></div>
+                </div>
+            </div>
+            <button class="btn-run txt-run" onclick="spinWheel()">Run</button>
+        </div>
+        
+        <div class="tab-nav">
+            <div class="nav-slider" id="navSlider"></div>
+            <button class="tab-btn active" id="btn-refer" onclick="switchTab('refer')">
+                <span class="txt-tab-refer">Refer & Earn</span>
+            </button>
+            <button class="tab-btn" id="btn-leader" onclick="switchTab('leader')">
+                <span class="txt-tab-leader">Leaderboard</span>
+            </button>
+        </div>
+
+        <div id="content-refer" class="tab-content active">
+            <div class="refer-box">
+                <p class="txt-refer-desc">Share this code to earn points!</p>
+                <span class="code-display">GIFT2026</span>
+                <button style="background:var(--bg-light); border:none; padding:8px 20px; border-radius:20px; color:var(--text-muted); font-size:0.8rem; cursor:pointer;">📋 Copy Code</button>
+            </div>
+        </div>
+
+        <div id="content-leader" class="tab-content">
+            <div class="leader-item">
+                <span class="rank">#1</span><span>Sarah Smith</span><strong>5400 pts</strong>
+            </div>
+            <div class="leader-item">
+                <span class="rank">#2</span><span>Mike Ross</span><strong>4200 pts</strong>
+            </div>
+        </div>
+    </main>
+
+    <section id="view-wallet" class="view">
+        <div class="back-row">
+            <div onclick="switchView('dashboard')" style="cursor:pointer; padding: 5px;">⬅</div>
+            <h2 class="txt-wallet">Wallet</h2>
+        </div>
+        <div class="balance-card">
+            <p style="opacity:0.9" class="txt-bal-lbl">Total Balance</p>
+            <div class="balance-amount">$124.50</div>
+            <button style="background:white; color:var(--primary); border:none; padding:10px 25px; border-radius:30px; font-weight:700;">Withdraw</button>
+        </div>
+        <h4 style="margin-bottom:15px;" class="txt-history">Transaction History</h4>
+        <div class="history-item">
+            <span>Wheel Spin Win</span>
+            <span style="color:var(--success); font-weight:700;">+$5.00</span>
+        </div>
+        <div class="history-item">
+            <span>Referral Bonus</span>
+            <span style="color:var(--success); font-weight:700;">+$10.00</span>
+        </div>
+    </section>
+
+    <section id="view-help" class="view">
+        <div class="back-row">
+            <div onclick="switchView('dashboard')" style="cursor:pointer; padding: 5px;">⬅</div>
+            <h2 class="txt-help">Help & Support</h2>
+        </div>
+        <div class="faq-item">
+            <span class="faq-q">How to withdraw?</span>
+            <p style="font-size:0.85rem; color:var(--text-muted)">Go to Wallet and click on the Withdraw button once you reach $50.</p>
+        </div>
+        <div class="faq-item">
+            <span class="faq-q">When do I get spin points?</span>
+            <p style="font-size:0.85rem; color:var(--text-muted)">Points are added instantly to your wallet after the wheel stops.</p>
+        </div>
+        <button style="width:100%; padding:15px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; margin-top:20px;">Contact Support</button>
+    </section>
+
+    <section id="view-profile" class="view">
+        <div class="back-row">
+            <div onclick="switchView('dashboard')" style="cursor:pointer; padding: 5px;">⬅</div>
+            <h2 class="txt-profile">Profile</h2>
+        </div>
+        <div class="avatar-wrap">
+            <img src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" class="avatar-img" id="displayPic">
+            <label class="edit-badge">✎<input type="file" hidden onchange="updatePhoto(event)"></label>
+        </div>
+        <label class="label-small txt-lbl-name">NAME</label>
+        <div class="field"><input type="text" value="Alex Johnson"><span>✎</span></div>
+        <label class="label-small txt-lbl-email">EMAIL</label>
+        <div class="field"><input type="email" value="alex@example.com"><span>✎</span></div>
+    </section>
+
+    <section id="view-settings" class="view">
+        <div class="back-row">
+            <div onclick="switchView('dashboard')" style="cursor:pointer; padding: 5px;">⬅</div>
+            <h2 class="txt-settings">Settings</h2>
+        </div>
+        <div class="setting-item">
+            <div>
+                <h4 class="txt-notif">Notifications</h4>
+                <p style="font-size:0.75rem; color:var(--text-muted)" class="txt-notif-desc">Receive gift alerts</p>
+            </div>
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+            <h4 class="txt-lang-lbl">Language</h4>
+            <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="hi">हिन्दी</option>
+            </select>
+        </div>
+        <div class="setting-item" onclick="openPasswordModal()" style="cursor:pointer;">
+    <h4>🔒 Change Password</h4>
+    <span>›</span>
+</div>
+
+
+<script>
+    /* --- 1. TAB & VIEW LOGIC --- */
+    function switchTab(tabName) {
+        const slider = document.getElementById('navSlider');
+        if(tabName === 'leader') {
+            slider.classList.add('right');
+            document.getElementById('btn-leader').classList.add('active');
+            document.getElementById('btn-refer').classList.remove('active');
+        } else {
+            slider.classList.remove('right');
+            document.getElementById('btn-refer').classList.add('active');
+            document.getElementById('btn-leader').classList.remove('active');
+        }
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById('content-' + tabName).classList.add('active');
+    }
+
+    function switchView(viewName) {
+        if(document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + viewName).classList.add('active');
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('backdrop').classList.toggle('active');
+    }
+
+    /* --- 2. LANGUAGE LOGIC --- */
+    const translations = {
+        en: {
+            brand: "GIFT APP", home: "Home", profile: "Profile", settings: "Settings", 
+            wallet: "Wallet", help: "Help & Support", logout: "Logout",
+            wheelTitle: "Gift Wheel", run: "Run", wheelDesc: "Automatically runs when button is hit",
+            lblName: "NAME", lblEmail: "EMAIL", langLbl: "Language",
+            notif: "Notifications", notifDesc: "Receive gift alerts",
+            tabRefer: "Refer & Earn", tabLeader: "Leaderboard", referDesc: "Share this code to earn points!",
+            balLbl: "Total Balance", history: "Transaction History"
+        },
+        es: {
+            brand: "APP DE REGALOS", home: "Inicio", profile: "Perfil", settings: "Ajustes",
+            wallet: "Billetera", help: "Ayuda y Soporte", logout: "Salir",
+            wheelTitle: "Rueda de Regalos", run: "Girar", wheelDesc: "Se ejecuta al pulsar el botón",
+            lblName: "NOMBRE", lblEmail: "CORREO", langLbl: "Idioma",
+            notif: "Notificaciones", notifDesc: "Recibir alertas de regalos",
+            tabRefer: "Invitar", tabLeader: "Clasificación", referDesc: "¡Comparte el código!",
+            balLbl: "Saldo Total", history: "Historial"
+        },
+        hi: {
+            brand: "गिफ्ट ऐप", home: "होम", profile: "प्रोफ़ाइल", settings: "सेटिंग्स",
+            wallet: "वॉलेट", help: "सहायता", logout: "लॉगआउट",
+            wheelTitle: "गिफ्ट व्हील", run: "चलाएं", wheelDesc: "बटन दबाते ही चलता है",
+            lblName: "नाम", lblEmail: "ईमेल", langLbl: "भाषा",
+            notif: "सूचनाएं", notifDesc: "अलर्ट प्राप्त करें",
+            tabRefer: "रेफर करें", tabLeader: "लीडरबोर्ड", referDesc: "अंक अर्जित करने के लिए साझा करें",
+            balLbl: "कुल बैलेंस", history: "लेन-देन का इतिहास"
+        }
+    };
+
+    function changeLanguage() {
+        const lang = document.getElementById('langSelect').value;
+        const t = translations[lang];
+        
+        document.getElementById('ui-brand').innerText = t.brand;
+        document.querySelectorAll('.txt-home').forEach(el => el.innerText = t.home);
+        document.querySelectorAll('.txt-profile').forEach(el => el.innerText = t.profile);
+        document.querySelectorAll('.txt-settings').forEach(el => el.innerText = t.settings);
+        document.querySelectorAll('.txt-wallet').forEach(el => el.innerText = t.wallet);
+        document.querySelectorAll('.txt-help').forEach(el => el.innerText = t.help);
+        document.querySelector('.txt-logout').innerText = t.logout;
+        document.querySelector('.txt-wheel-title').innerText = t.wheelTitle;
+        document.querySelector('.txt-wheel-desc').innerText = t.wheelDesc;
+        document.querySelector('.txt-run').innerText = t.run;
+        document.querySelector('.txt-lbl-name').innerText = t.lblName;
+        document.querySelector('.txt-lbl-email').innerText = t.lblEmail;
+        document.querySelector('.txt-lang-lbl').innerText = t.langLbl;
+        document.querySelector('.txt-notif').innerText = t.notif;
+        document.querySelector('.txt-tab-refer').innerText = t.tabRefer;
+        document.querySelector('.txt-tab-leader').innerText = t.tabLeader;
+        document.querySelector('.txt-bal-lbl').innerText = t.balLbl;
+        document.querySelector('.txt-history').innerText = t.history;
+    }
+
+    /* --- 3. WHEEL LOGIC --- */
+    let degree = 0;
+    function spinWheel() {
+        degree += Math.floor(Math.random() * 2000) + 2000;
+        document.getElementById('wheel').style.transform = `rotate(${degree}deg)`;
+    }
+
+    function updatePhoto(event) {
+        const reader = new FileReader();
+        reader.onload = () => { document.getElementById('displayPic').src = reader.result; };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+/* --- CHANGE PASSWORD LOGIC --- */
+function openPasswordModal() {
+    document.getElementById("passwordModal").style.display = "flex";
+}
+
+function closePasswordModal() {
+    document.getElementById("passwordModal").style.display = "none";
+    oldPassword.value = newPassword.value = confirmPassword.value = "";
+}
+
+function saveNewPassword() {
+    const oldPass = document.getElementById("oldPassword").value;
+    const newPass = document.getElementById("newPassword").value;
+    const confirmPass = document.getElementById("confirmPassword").value;
+
+    const rule = /^(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
+
+    if (!oldPass || !newPass || !confirmPass) {
+        alert("All fields are required");
+        return;
+    }
+
+    if (!rule.test(newPass)) {
+        alert("Password must be at least 8 characters with 1 number & 1 special character");
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        alert("Passwords do not match");
+        return;
+    }
+
+    alert("Password changed successfully ✅");
+    closePasswordModal();
+}
+
+
+</script>
+
+</body>
+</html>

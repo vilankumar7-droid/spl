@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift App Pro - MultiView</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Vibrant Palette */
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --info: #0ea5e9;
+            --bg-deep: #0f172a;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            /* Ultra-vibrant background */
+            background: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0, transparent 50%),
+                var(--bg-deep);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            padding: 20px;
+        }
+
+        /* --- Global Glass Styles --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        /* --- View Toggle Switch --- */
+        .view-switcher {
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .switch { position: relative; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; cursor: pointer; inset: 0; 
+            background: #334155; transition: .4s; border-radius: 34px; 
+        }
+        .slider:before { 
+            position: absolute; content: ""; height: 18px; width: 18px; 
+            left: 4px; bottom: 4px; background: white; transition: .4s; border-radius: 50%; 
+        }
+        input:checked + .slider { background: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* --- App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 80vh;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Mobile Frame Styling when active */
+        body.mobile-mode #app-container {
+            max-width: 380px;
+            height: 780px;
+            border: 10px solid #1e293b;
+            border-radius: 45px;
+        }
+
+        /* --- Circular Icon Frames --- */
+        .icon-circle {
+            width: 42px;
+            height: 42px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        .active .icon-circle {
+            background: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+            border-color: transparent;
+        }
+
+        /* --- HEADER & NAVIGATION --- */
+        header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* Web Dashboard Nav */
+        .web-nav {
+            display: flex;
+            gap: 20px;
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.2);
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: #94a3b8;
+            text-decoration: none;
+        }
+        .nav-link.active { color: white; background: var(--glass); }
+
+        /* --- CONTENT GRID (Settings Style) --- */
+        .content-area {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .vibrant-card {
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            transition: 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .vibrant-card:hover { transform: translateY(-5px); }
+
+        /* Vibrant Backgrounds for Cards */
+        .card-emerald { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), transparent); }
+        .card-indigo { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), transparent); }
+        .card-rose { background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), transparent); }
+        .card-amber { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), transparent); }
+
+        .card-title { display: block; font-weight: 700; font-size: 0.9rem; margin: 10px 0 5px; }
+        .card-sub { font-size: 0.75rem; color: #94a3b8; }
+
+        /* --- RIGHT SIDE DRAWER --- */
+        .drawer-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+            display: none; z-index: 100; backdrop-filter: blur(5px);
+        }
+        .drawer-overlay.active { display: block; }
+
+        .right-drawer {
+            position: absolute; top: 0; right: -300px; width: 280px; height: 100%;
+            background: #111827; z-index: 101; padding: 40px 20px;
+            transition: right 0.4s ease; border-left: 1px solid var(--glass-border);
+        }
+        .right-drawer.active { right: 0; }
+
+        /* --- MOBILE NAVIGATION --- */
+        .mobile-bottom-nav {
+            display: none;
+            justify-content: space-around;
+            padding: 15px 10px 30px;
+            background: #0f172a;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* --- MODE TOGGLING --- */
+        body.mobile-mode .web-nav { display: none; }
+        body.mobile-mode .mobile-bottom-nav { display: flex; }
+        body.mobile-mode .grid-layout { grid-template-columns: repeat(2, 1fr); }
+
+        .view-section { display: flex; flex-direction: column; height: 100%; }
+
+    </style>
+</head>
+<body>
+
+    <div class="view-switcher glass-panel">
+        <span>Web Dashboard</span>
+        <label class="switch">
+            <input type="checkbox" id="modeToggle">
+            <span class="slider"></span>
+        </label>
+        <span>Mobile App</span>
+    </div>
+
+    <div id="app-container" class="glass-panel">
+        
+        <div class="drawer-overlay" id="overlay" onclick="toggleMenu()"></div>
+        <div class="right-drawer" id="drawer">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
+                <h3 style="font-weight: 800; color: var(--primary);">GIFT PRO</h3>
+                <span class="material-icons-round" style="cursor: pointer;" onclick="toggleMenu()">close</span>
+            </div>
+            <div style="display: grid; gap: 10px;">
+                <div class="nav-link"><span class="material-icons-round">person</span> Profile</div>
+                <div class="nav-link"><span class="material-icons-round">wallet</span> Wallet</div>
+                <div class="nav-link"><span class="material-icons-round">settings</span> Settings</div>
+                <div class="nav-link" style="color: var(--secondary);"><span class="material-icons-round">logout</span> Logout</div>
+            </div>
+        </div>
+
+        <div class="view-section">
+            <header>
+                <h2 style="font-weight: 800; letter-spacing: -1px;">GIFT APP</h2>
+                <div class="icon-circle" onclick="toggleMenu()" style="cursor: pointer;">
+                    <span class="material-icons-round">menu</span>
+                </div>
+            </header>
+
+            <nav class="web-nav">
+                <div class="nav-link active"><span class="material-icons-round">grid_view</span> Dashboard</div>
+                <div class="nav-link"><span class="material-icons-round">auto_awesome</span> Gift Wheel</div>
+                <div class="nav-link"><span class="material-icons-round">payments</span> Earnings</div>
+                <div class="nav-link"><span class="material-icons-round">storefront</span> Marketplace</div>
+            </nav>
+
+            <div class="content-area">
+                <div class="vibrant-card card-indigo" style="background: linear-gradient(135deg, var(--primary), #a855f7); text-align: center; margin-bottom: 25px;">
+                    <span class="material-icons-round" style="font-size: 60px; animation: pulse 2s infinite;">favorite</span>
+                    <h1 style="font-size: 2.5rem; font-weight: 800;">300 BEATS</h1>
+                    <p style="opacity: 0.8;">HB-2 Mining Engine Active</p>
+                    <button style="margin-top: 15px; padding: 10px 30px; border-radius: 50px; border:none; font-weight:800; color: var(--primary); cursor:pointer;">START MINER</button>
+                </div>
+
+                <h4 style="margin-bottom: 15px; opacity: 0.6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Statistics & Settings</h4>
+                
+                <div class="grid-layout">
+                    <div class="vibrant-card card-emerald">
+                        <span class="material-icons-round" style="color: var(--success);">bolt</span>
+                        <span class="card-title">Power</span>
+                        <span class="card-sub">1.2x Boost</span>
+                    </div>
+                    <div class="vibrant-card card-rose">
+                        <span class="material-icons-round" style="color: var(--secondary);">group</span>
+                        <span class="card-title">Referrals</span>
+                        <span class="card-sub">24 Members</span>
+                    </div>
+                    <div class="vibrant-card card-amber">
+                        <span class="material-icons-round" style="color: var(--warning);">military_tech</span>
+                        <span class="card-title">Badge</span>
+                        <span class="card-sub">Gold Miner</span>
+                    </div>
+                    <div class="vibrant-card card-indigo">
+                        <span class="material-icons-round" style="color: var(--info);">account_balance_wallet</span>
+                        <span class="card-title">Wallet</span>
+                        <span class="card-sub">$1,240.50</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="mobile-bottom-nav">
+                <div class="nav-link active"><div class="icon-circle"><span class="material-icons-round">handyman</span></div></div>
+                <div class="nav-link"><div class="icon-circle"><span class="material-icons-round">stars</span></div></div>
+                <div class="nav-link"><div class="icon-circle"><span class="material-icons-round">shopping_cart</span></div></div>
+                <div class="nav-link"><div class="icon-circle"><span class="material-icons-round">person</span></div></div>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        // Toggle View Mode
+        const modeToggle = document.getElementById('modeToggle');
+        modeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('mobile-mode');
+        });
+
+        // Toggle Right Menu
+        function toggleMenu() {
+            document.getElementById('drawer').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        // Active Nav Logic
+        const navs = document.querySelectorAll('.nav-link');
+        navs.forEach(n => {
+            n.addEventListener('click', function() {
+                navs.forEach(link => link.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</body>
+</html>

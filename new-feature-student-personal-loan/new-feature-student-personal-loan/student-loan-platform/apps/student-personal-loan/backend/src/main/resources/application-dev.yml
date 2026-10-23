@@ -1,0 +1,13 @@
+# Zero-dependency local profile: in-memory H2 (PostgreSQL mode). Run with --spring.profiles.active=dev
+spring:
+  datasource:
+    url: jdbc:h2:mem:personal_loan;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: false
+
+platform:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}

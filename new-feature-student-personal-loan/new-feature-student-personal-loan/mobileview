@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift App Pro - Miner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --accent: #ff4757;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            padding: 10px;
+        }
+
+        /* --- Main App Frame --- */
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            height: 850px;
+            max-height: 95vh;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
+        }
+
+        /* --- Header --- */
+        header {
+            padding: 25px 20px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .logo-text { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; }
+
+        /* --- Circular Icon Frame --- */
+        .icon-circle {
+            width: 45px;
+            height: 45px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .icon-circle:active { transform: scale(0.9); background: var(--primary); }
+
+        /* --- Right Sidebar Menu --- */
+        .drawer-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+            display: none; z-index: 100; backdrop-filter: blur(4px);
+        }
+        .drawer-overlay.active { display: block; }
+
+        .drawer {
+            position: absolute; top: 0; right: -300px; width: 280px; height: 100%;
+            background: #111827; border-left: 1px solid var(--glass-border);
+            z-index: 101; padding: 40px 20px;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .drawer.active { right: 0; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px;
+            border-radius: 16px; margin-bottom: 10px; cursor: pointer;
+            transition: 0.2s; color: var(--text-dim);
+        }
+        .menu-item:hover { background: var(--glass-bg); color: white; }
+        .menu-item .material-icons-round { font-size: 22px; }
+
+        /* --- Main Content --- */
+        .content { flex: 1; overflow-y: auto; padding: 0 20px 100px; }
+
+        /* Hero Mining Card */
+        .hero-card {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 24px; padding: 30px 20px; text-align: center;
+            margin-bottom: 25px; box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.4);
+        }
+
+        .heart-beat {
+            font-size: 70px; color: white;
+            animation: pulse 1.5s infinite ease-in-out;
+            margin-bottom: 10px; display: block;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* --- Settings-style Grid Layout --- */
+        .grid-layout {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
+        }
+
+        .setting-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 20px 15px; border-radius: 20px;
+            display: flex; flex-direction: column; align-items: flex-start;
+            gap: 10px; transition: 0.3s;
+        }
+        .setting-card:hover { border-color: var(--primary); background: rgba(255,255,255,0.08); }
+        
+        .card-icon { color: var(--primary); font-size: 24px; }
+        .card-title { font-size: 0.85rem; font-weight: 700; color: white; }
+        .card-sub { font-size: 0.7rem; color: var(--text-dim); line-height: 1.3; }
+
+        /* --- Bottom Navigation --- */
+        .bottom-nav {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            height: 85px; background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px); border-top: 1px solid var(--glass-border);
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 0 10px 15px; z-index: 50;
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            text-decoration: none; color: var(--text-dim); transition: 0.3s;
+        }
+
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active .icon-circle { background: var(--primary); border-color: var(--primary); color: white; }
+        
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="drawer-overlay" id="overlay" onclick="toggleMenu()"></div>
+        <div class="drawer" id="drawer">
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 30px;">
+                <h3 style="font-weight: 800;">MENU</h3>
+                <span class="material-icons-round" style="cursor:pointer" onclick="toggleMenu()">close</span>
+            </div>
+            <div class="menu-item"><span class="material-icons-round">person</span> Profile</div>
+            <div class="menu-item"><span class="material-icons-round">account_balance_wallet</span> My Wallet</div>
+            <div class="menu-item"><span class="material-icons-round">history</span> History</div>
+            <div class="menu-item"><span class="material-icons-round">notifications</span> Notifications</div>
+            <div class="menu-item"><span class="material-icons-round">settings</span> Settings</div>
+            <hr style="border:0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+            <div class="menu-item" style="color: var(--accent);"><span class="material-icons-round">logout</span> Logout</div>
+        </div>
+
+        <header>
+            <div class="logo-text">GIFT APP PRO</div>
+            <div class="icon-circle" onclick="toggleMenu()">
+                <span class="material-icons-round">menu</span>
+            </div>
+        </header>
+
+        <div class="content">
+            
+            <div class="hero-card">
+                <span class="material-icons-round heart-beat">favorite</span>
+                <h2 style="font-weight: 800; margin-bottom: 5px;">300 BEATS</h2>
+                <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 20px;">Mining active at 1.2x speed</p>
+                <button style="background: white; color: var(--primary); border:none; padding: 12px 30px; border-radius: 50px; font-weight: 800; cursor:pointer;">RUN MINER</button>
+            </div>
+
+            <div class="grid-layout">
+                
+                <div class="setting-card">
+                    <span class="material-icons-round card-icon">bolt</span>
+                    <span class="card-title">Mining Power</span>
+                    <span class="card-sub">HB-2 Engine active</span>
+                </div>
+
+                <div class="setting-card">
+                    <span class="material-icons-round card-icon">group</span>
+                    <span class="card-title">Referrals</span>
+                    <span class="card-sub">12 users invited</span>
+                </div>
+
+                <div class="setting-card">
+                    <span class="material-icons-round card-icon">military_tech</span>
+                    <span class="card-title">Rank</span>
+                    <span class="card-sub">Gold Miner Tier</span>
+                </div>
+
+                <div class="setting-card">
+                    <span class="material-icons-round card-icon">workspace_premium</span>
+                    <span class="card-title">Bonuses</span>
+                    <span class="card-sub">Daily gift ready</span>
+                </div>
+
+                <div class="setting-card" style="grid-column: span 2;">
+                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                        <div>
+                            <span class="card-title" style="display:block">Real Heart Sound</span>
+                            <span class="card-sub">Play audio during mining</span>
+                        </div>
+                        <span class="material-icons-round" style="color:var(--primary)">toggle_on</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <div class="icon-circle">
+                    <span class="material-icons-round">handyman</span>
+                </div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="icon-circle">
+                    <span class="material-icons-round">stars</span>
+                </div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="icon-circle">
+                    <span class="material-icons-round">account_balance_wallet</span>
+                </div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="icon-circle">
+                    <span class="material-icons-round">shopping_cart</span>
+                </div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="icon-circle">
+                    <span class="material-icons-round">person</span>
+                </div>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        // Toggle Sidebar Menu from the Right
+        function toggleMenu() {
+            document.getElementById('drawer').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        // Navigation Highlight Interaction
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                navItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+
+</body>
+</html>
