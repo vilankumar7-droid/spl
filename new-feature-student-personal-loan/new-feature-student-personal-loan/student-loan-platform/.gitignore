@@ -1,0 +1,28 @@
+# Secrets / local env
+.env
+*.env.local
+
+# Java
+target/
+*.class
+.idea/
+*.iml
+.vscode/
+.gradle/
+build/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Runtime data
+data/
+*.log
+.DS_Store

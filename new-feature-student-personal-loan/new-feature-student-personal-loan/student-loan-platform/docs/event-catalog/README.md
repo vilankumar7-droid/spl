@@ -2,7 +2,9 @@
 
 All events share the envelope in [`shared/event-contracts/event-envelope.v1.schema.json`](../../shared/event-contracts/event-envelope.v1.schema.json).
 Events are written to the `outbox_event` table in the **same transaction** as the business change, then
-published by `OutboxPublisher` (to the log today, to Kafka from Stage D).
+published by `OutboxPublisher` (structured log when Kafka is disabled, Kafka when enabled). The Gradle Event
+Service consumes the loan topics into `tracked_event`, idempotently by `eventId`, while reporting publish and
+retry status from the shared outbox database.
 
 | Event | Topic | Producer | When |
 | --- | --- | --- | --- |
